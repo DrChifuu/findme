@@ -1,0 +1,8 @@
+.env
+db.js
+node_modules
+package-lock.json
+package.json
+schema.sql
+server.js
+text.txt

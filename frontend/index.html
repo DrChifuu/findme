@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FindMe - Ficha Médica</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
+  <!-- Logo -->
+  <div class="flex flex-col items-center mb-6">
+    <img src="https://i.ibb.co/Lx15xGx/findme.png" alt="FindMe Logo" class="w-20 h-20 mb-2" />
+    <h1 class="text-3xl font-bold text-green-700">FindMe</h1>
+    <p class="text-gray-600">Pulsera Inteligente con NFC</p>
+  </div>
+
+  <!-- Contenedor principal -->
+  <div class="bg-white shadow-lg rounded-xl w-full max-w-lg p-6 space-y-8">
+    <!-- Ficha Médica existente -->
+    <section id="seccion-edicion" class="">
+      <h2 class="text-xl font-semibold text-green-700 mb-4">Ficha Médica</h2>
+      <div id="vista-ficha" class="space-y-1 mb-4">
+        <p><span class="font-semibold">Nombre:</span> <span id="dato-nombre">—</span></p>
+        <p><span class="font-semibold">Teléfono de emergencia:</span> <span id="dato-telefono">—</span></p>
+        <p><span class="font-semibold">Hospital:</span> <span id="dato-hospital">—</span></p>
+        <p><span class="font-semibold">Condiciones médicas:</span> <span id="dato-condiciones">—</span></p>
+      </div>
+      <form id="form-edicion" class="hidden flex flex-col gap-3">
+        <label class="flex flex-col">
+          <span class="text-sm text-gray-600">Nombre</span>
+          <input type="text" id="input-nombre" class="border rounded px-2 py-1" required />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-sm text-gray-600">Teléfono de emergencia</span>
+          <input type="text" id="input-telefono" class="border rounded px-2 py-1" required />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-sm text-gray-600">Hospital</span>
+          <input type="text" id="input-hospital" class="border rounded px-2 py-1" required />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-sm text-gray-600">Condiciones médicas</span>
+          <input type="text" id="input-condiciones" class="border rounded px-2 py-1" required />
+        </label>
+        <button type="submit" class="bg-green-600 text-white py-2 rounded mt-3 hover:bg-green-700">Guardar cambios</button>
+      </form>
+    </section>
+
+    <!-- Formulario para nueva ficha -->
+    <section id="seccion-nueva">
+      <h2 class="text-xl font-semibold text-blue-700 mb-4">Crear Nueva Ficha Médica</h2>
+      <form id="form-nueva" class="flex flex-col gap-3">
+        <label class="flex flex-col">
+          <span class="text-sm text-gray-600">Nombre</span>
+          <input type="text" id="nuevo-nombre" class="border rounded px-2 py-1" required />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-sm text-gray-600">Teléfono de emergencia</span>
+          <input type="text" id="nuevo-telefono" class="border rounded px-2 py-1" required />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-sm text-gray-600">Hospital</span>
+          <input type="text" id="nuevo-hospital" class="border rounded px-2 py-1" required />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-sm text-gray-600">Condiciones médicas</span>
+          <input type="text" id="nuevo-condiciones" class="border rounded px-2 py-1" required />
+        </label>
+        <button type="submit" class="bg-blue-600 text-white py-2 rounded mt-3 hover:bg-blue-700">Crear ficha</button>
+      </form>
+    </section>
+  </div>
+
+  <!-- Botón flotante Rastéame aquí -->
+  <div class="fixed bottom-4 right-4">
+    <button id="btn-rastrear" class="hidden flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-green-700 transition">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+          d="M12 11c0 1.104-.896 2-2 2s-2-.896-2-2 .896-2 2-2 2 .896 2 2zM12 22s8-4.418 8-10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 5.582 8 10 8 10z" />
+      </svg>
+      Rastéame aquí
+    </button>
+  </div>
+
+  <script>
+    // --- CONFIG ---
+    const API_BASE = "http://localhost:4000/api";
+    const esPropietario = true; // simulado. Si es dueño, puede editar
+    const formEdicion = document.getElementById("form-edicion");
+    const btnRastrear = document.getElementById("btn-rastrear");
+
+    if (esPropietario) {
+      formEdicion.classList.remove("hidden");
+      btnRastrear.classList.remove("hidden");
+    }
+
+    // Obtener slug desde ?id=<slug> o desde /#<slug>
+    const url = new URL(window.location.href);
+    const slug = url.searchParams.get("id") || location.hash.replace("#", "");
+
+    async function cargarFicha() {
+      if (!slug) return;
+      const res = await fetch(`${API_BASE}/ficha/${slug}`);
+      if (!res.ok) return alert("No se pudo cargar la ficha");
+      const data = await res.json();
+      document.getElementById("dato-nombre").textContent = data.nombre;
+      document.getElementById("dato-telefono").textContent = data.telefono;
+      document.getElementById("dato-hospital").textContent = data.hospital;
+      document.getElementById("dato-condiciones").textContent = data.condiciones;
+      // precargar form si es dueño
+      if (esPropietario) {
+        document.getElementById("input-nombre").value = data.nombre;
+        document.getElementById("input-telefono").value = data.telefono;
+        document.getElementById("input-hospital").value = data.hospital;
+        document.getElementById("input-condiciones").value = data.condiciones;
+      }
+    }
+
+    formEdicion.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!slug) return alert("No hay ID/slug en la URL");
+      const body = {
+        nombre: document.getElementById("input-nombre").value,
+        telefono: document.getElementById("input-telefono").value,
+        hospital: document.getElementById("input-hospital").value,
+        condiciones: document.getElementById("input-condiciones").value,
+      };
+      const res = await fetch(`${API_BASE}/ficha/${slug}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return alert("Error al guardar");
+      await cargarFicha();
+      alert("Datos actualizados correctamente ✅");
+    });
+
+    // Nuevo formulario de creación de ficha
+    const formNueva = document.getElementById("form-nueva");
+
+    formNueva.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const body = {
+        nombre: document.getElementById("nuevo-nombre").value,
+        telefono: document.getElementById("nuevo-telefono").value,
+        hospital: document.getElementById("nuevo-hospital").value,
+        condiciones: document.getElementById("nuevo-condiciones").value,
+      };
+      const res = await fetch(`${API_BASE}/ficha`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return alert("Error al crear ficha");
+      const data = await res.json();
+      alert(`Ficha creada con slug ${data.slug}`);
+      // Redirigir para cargar la ficha creada
+      window.location.href = `index.html?id=${data.slug}`;
+    });
+
+    btnRastrear.addEventListener("click", () => {
+      window.location.href = "https://maps.google.com";
+    });
+
+    cargarFicha();
+  </script>
+</body>
+</html>
